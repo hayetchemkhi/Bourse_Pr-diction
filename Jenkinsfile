@@ -11,18 +11,18 @@ pipeline {
                 git 'https://github.com/hayetchemkhi/Bourse_Pr-diction.git'
             }
         }
-                {
-        DOCKER_BUILDKIT = '0'  // Désactive BuildKit
-    }
-    stages {
-        stage('Build Docker Image') {
+
+        // Désactiver BuildKit après le checkout
+        stage('Disable BuildKit') {
             steps {
-                sh 'docker build -t streamlit-app .'
+                script {
+                    // Désactive BuildKit si nécessaire
+                    env.DOCKER_BUILDKIT = '0'
+                }
             }
         }
-    }
-}
 
+        // Construction de l'image Docker
         stage('Build Docker Image') {
             steps {
                 script {
@@ -30,22 +30,26 @@ pipeline {
                 }
             }
         }
+
+        // Push de l'image Docker vers Docker Hub
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Login to Docker Hub using Jenkins credentials
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                    // Connexion à Docker Hub avec les informations d'identification de Jenkins
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
+                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin'
                         sh 'docker tag ${IMAGE_NAME} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest'
                         sh 'docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest'
                     }
                 }
             }
         }
+
+        // Déploiement de l'image Docker sur un serveur distant
         stage('Deploy to Server') {
             steps {
                 script {
-                    sh 'ssh hayet@10.0.2.15 "docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest && docker run -d -p 8501:8501 ${DOCKER_REGISTRY}/${IMAGE_NAME}"'
+                    sh 'ssh hayet@10.0.2.15 "docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest"'
                 }
             }
         }
