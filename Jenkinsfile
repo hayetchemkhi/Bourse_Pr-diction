@@ -6,7 +6,12 @@ pipeline {
         DOCKER_IMAGE = 'streamlit-app'
         REPOSITORY_NAME = 'hayet123/streamlit-app'
     }
-    
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/hayetchemkhi/Bourse_Pr-diction.git'
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
