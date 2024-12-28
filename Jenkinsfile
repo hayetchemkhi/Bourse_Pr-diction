@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_BUILDKIT = '1'
+        DOCKER_BUILDKIT = '0'
         IMAGE_NAME = 'streamlit-app'
         DOCKER_REGISTRY = 'docker.io'
     }
