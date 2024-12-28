@@ -1,43 +1,42 @@
 pipeline {
     agent any
-
     environment {
+        DOCKER_BUILDKIT = '1'
         IMAGE_NAME = 'streamlit-app'
-        DOCKER_REGISTRY = 'docker.io' // ou ton propre registre
+        DOCKER_REGISTRY = 'docker.io'
     }
-
     stages {
         stage('Checkout') {
             steps {
                 git 'https://github.com/hayetchemkhi/Bourse_Pr-diction.git'
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Construire l'image Docker
                     sh 'docker build -t ${IMAGE_NAME} .'
                 }
             }
         }
-
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Push de l'image Docker vers un registre
-                    sh 'docker push ${IMAGE_NAME}'
+                    // Login to Docker Hub using Jenkins credentials
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                        sh 'docker tag ${IMAGE_NAME} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest'
+                        sh 'docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest'
+                    }
                 }
             }
         }
-
         stage('Deploy to Server') {
             steps {
                 script {
-                    // Déploiement de l'application, selon ton serveur cible
-                    sh 'ssh user@server "docker pull ${IMAGE_NAME} && docker run -d -p 8501:8501 ${IMAGE_NAME}"'
+                    sh 'ssh hayet@10.0.2.15 "docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest && docker run -d -p 8501:8501 ${DOCKER_REGISTRY}/${IMAGE_NAME}"'
                 }
             }
         }
     }
 }
+
