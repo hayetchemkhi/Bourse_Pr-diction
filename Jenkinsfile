@@ -11,6 +11,18 @@ pipeline {
                 git 'https://github.com/hayetchemkhi/Bourse_Pr-diction.git'
             }
         }
+                {
+        DOCKER_BUILDKIT = '0'  // Désactive BuildKit
+    }
+    stages {
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t streamlit-app .'
+            }
+        }
+    }
+}
+
         stage('Build Docker Image') {
             steps {
                 script {
