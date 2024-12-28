@@ -1,39 +1,53 @@
 pipeline {
     agent any
+
     environment {
-        DOCKER_BUILDKIT = '0'
-        IMAGE_NAME = 'streamlit-app'
-        DOCKER_REGISTRY = 'docker.io'
+        DOCKER_IMAGE = 'streamlit-app'
+        REPOSITORY_NAME = 'hayet123/streamlit-app'
     }
+
     stages {
         stage('Checkout') {
             steps {
                 git 'https://github.com/hayetchemkhi/Bourse_Pr-diction.git'
             }
         }
+
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t streamlit-app .'
+                script {
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
             }
         }
+
+        stage('Login to Docker') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hayet123', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                }
+            }
+        }
+
+        stage('Tag Docker Image') {
+            steps {
+                script {
+                    sh "docker tag $DOCKER_IMAGE docker.io/$REPOSITORY_NAME:latest"
+                }
+            }
+        }
+
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Utiliser les credentials Docker
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USER --password-stdin'
-                        sh 'docker tag streamlit-app docker.io/hayetchemkhi/streamlit-app:latest'
-                        sh 'docker push docker.io/hayetchemkhi/streamlit-app:latest'
-                    }
+                    sh "docker push docker.io/$REPOSITORY_NAME:latest"
                 }
             }
         }
+
         stage('Deploy to Server') {
             steps {
-                script {
-                    sh 'ssh user@server "docker pull docker.io/hayetchemkhi/streamlit-app:latest"'
-                    sh 'ssh user@server "docker run -d -p 8501:8501 hayetchemkhi/streamlit-app:latest"'
-                }
+                echo 'Deploying to server (not implemented in this stage)'
             }
         }
     }
