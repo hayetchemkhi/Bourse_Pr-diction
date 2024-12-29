@@ -1,5 +1,5 @@
-sstreamlit==1.29.0
-numpy==1.23.5
+streamlit==1.29.0
+pytest
 pandas==1.5.3
 yfinance==0.2.31
 tensorflow==2.14.0
