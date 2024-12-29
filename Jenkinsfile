@@ -29,10 +29,7 @@ pipeline {
                 sh 'docker push $DOCKER_IMAGE'
             }
         }
-        stage('Déployer sur Fly.io') {
-            steps {
-                sh 'flyctl deploy'
-            }
         }
     }
 }
+
