@@ -1,54 +1,38 @@
 pipeline {
     agent any
-
     environment {
-        DOCKER_BUILDKIT = '0'
-        DOCKER_IMAGE = 'streamlit-app'
-        REPOSITORY_NAME = 'hayet123/streamlit-app'
+        DOCKER_IMAGE = 'votre-utilisateur/streamlit-app:latest'
     }
     stages {
-        stage('Checkout') {
+        stage('Cloner le Code') {
             steps {
-                git 'https://github.com/hayetchemkhi/Bourse_Pr-diction.git'
+                git url: 'https://github.com/[votre-username]/streamlit-app.git'
             }
         }
-        stage('Build Docker Image') {
+        stage('Installer les Dépendances') {
             steps {
-                script {
-                    sh 'docker build -t $DOCKER_IMAGE .'
-                }
+                sh 'pip install -r requirements.txt'
             }
         }
-
-        stage('Login to Docker') {
+        stage('Exécuter les Tests Unitaires') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hayet123', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                    sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
-                }
+                sh 'pytest test_app.py'
             }
         }
-
-        stage('Tag Docker Image') {
+        stage('Construire l\'Image Docker') {
             steps {
-                script {
-                    sh "docker tag $DOCKER_IMAGE docker.io/$REPOSITORY_NAME:latest"
-                }
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
-
-        stage('Push Docker Image') {
+        stage('Pousser vers Docker Hub') {
             steps {
-                script {
-                    sh "docker push docker.io/$REPOSITORY_NAME:latest"
-                }
+                sh 'docker push $DOCKER_IMAGE'
             }
         }
-
-        stage('Deploy to Server') {
+        stage('Déployer sur Fly.io') {
             steps {
-                echo 'Deploying to server (not implemented in this stage)'
+                sh 'flyctl deploy'
             }
         }
     }
 }
-
